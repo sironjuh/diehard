@@ -132,13 +132,13 @@
 
 
 (defn ^:no-doc fallback [opts]
-  (when-let [fb (:fallback opts)]
+  (when-some [fb (:fallback opts)]
     (Fallback/of ^CheckedFunction
-     (u/fn-as-checked-function
-      (fn [^ExecutionAttemptedEvent exec-event]
-       (let [fb (if-not (fn? fb) (constantly fb) fb)]
-         (with-context exec-event
-           (fb (.getLastFailure exec-event) (.getLastResult exec-event)))))))))
+                 (u/fn-as-checked-function
+                   (fn [^ExecutionAttemptedEvent exec-event]
+                     (let [fb (if-not (fn? fb) (constantly fb) fb)]
+                       (with-context exec-event
+                         (fb (.getLastFailure exec-event) (.getLastResult exec-event)))))))))
 
 (defmacro ^{:doc "Predefined retry policy.
 #### Available options
@@ -342,7 +342,7 @@ It will work together with retry policy as quit criteria.
            fallback# (fallback the-opt#)
            cb# (:circuit-breaker the-opt#)
 
-           policies# (into-array FailurePolicy (filter some? [retry-policy# fallback# cb#]))
+           policies# (into-array FailurePolicy (filter some? [fallback# retry-policy# cb#]))
 
            failsafe# (Failsafe/with policies#)
            failsafe# (if-let [on-complete# (:on-complete the-opt#)]
@@ -439,7 +439,7 @@ You can always check circuit breaker state with
          fallback# (fallback opts#)
          cb# (:circuitbreaker opts#)
 
-         policies# (into-array FailurePolicy (filter some? [cb# fallback#]))
+         policies# (into-array FailurePolicy (filter some? [fallback# cb#]))
          failsafe# (Failsafe/with policies#)
          failsafe# (if-let [on-complete# (:on-complete opts#)]
                      (.onComplete failsafe#
